@@ -1,6 +1,6 @@
 import {useQuery} from "@tanstack/react-query";
 import {Link} from "react-router-dom";
-import {useState} from "react";
+import {useState, useEffect} from "react";
 import {useAuth} from "../contexts/Auth";
 import {httpRequest} from "../interceptor/axiosInterceptor";
 import {url} from "../baseUrl";
@@ -22,26 +22,45 @@ export default function UserCard({
                                  }: UserCardProps) {
     const {user} = useAuth();
     const {socket} = useAppContext();
-    const [iFollow, setIFollow] = useState<boolean>(
-        () => followers?.includes(user!.id) ?? false
-    );
+    const [iFollow, setIFollow] = useState<boolean>(false);
+    
+    // Check if currently following this user
+    const {data: followingStatus, refetch: checkFollowingStatus} = useQuery({
+        queryFn: () => httpRequest.get(`${url}/follows/is-following/${id}`),
+        queryKey: ["is-following", user?.id, id],
+        enabled: !!user?.id && user?.id !== id,
+        onSuccess: (response) => {
+            console.log('UserCard - Is following response:', response.data);
+            setIFollow(response.data?.isFollowing || false);
+        },
+        onError: (error) => {
+            console.error('UserCard - Error checking follow status:', error);
+            setIFollow(false);
+        },
+    });
+
     const {refetch: follow} = useQuery({
-        queryFn: () => httpRequest.put(`${url}/users/follow/${id}`),
+        queryFn: () => httpRequest.post(`${url}/follows/${id}`),
         queryKey: ["handle", "follow", id],
         enabled: false,
+        onSuccess: () => {
+            setIFollow(true);
+        },
     });
+    
     const {refetch: unfollow} = useQuery({
-        queryFn: () => httpRequest.put(`${url}/users/unfollow/${id}`),
+        queryFn: () => httpRequest.delete(`${url}/follows/${id}`),
         queryKey: ["handle", "unfollow", id],
         enabled: false,
+        onSuccess: () => {
+            setIFollow(false);
+        },
     });
 
     function handleFollowUnfollow() {
         if (iFollow) {
-            setIFollow(false);
             unfollow();
         } else {
-            setIFollow(true);
             socket.emit("notify", {userId: id});
             follow();
         }
@@ -100,14 +119,14 @@ export default function UserCard({
                 <button
                     onClick={() => handleFollowUnfollow()}
                     style={{
-                        backgroundColor: iFollow ? "black" : "transparent",
+                        backgroundColor: iFollow ? "white" : "black",
                         outline: "transparent",
-                        border: `1px solid ${iFollow ? "black" : "gray"}`,
+                        border: `1px solid ${iFollow ? "gray" : "black"}`,
                         borderRadius: "17px",
                         padding: "7px 14px",
                         cursor: "pointer",
                         marginLeft: "auto",
-                        color: iFollow ? "white" : "black",
+                        color: iFollow ? "gray" : "white",
                     }}
                 >
                     {iFollow ? "Following" : "Follow"}

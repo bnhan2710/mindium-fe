@@ -1,5 +1,6 @@
 import {Link} from "react-router-dom";
 import "./storyCard.css";
+import { DEFAULT_IMG } from "../App";
 
 type StoryCardProps = {
     showImg: boolean;
@@ -34,7 +35,7 @@ export default function StoryCard({
                 <Link to={`/users/${userId}`}>
                     <img
                         style={{width: "22px", borderRadius: "50%"}}
-                        src={avatar}
+                        src={avatar || DEFAULT_IMG}
                         alt=""
                     />
                 </Link>

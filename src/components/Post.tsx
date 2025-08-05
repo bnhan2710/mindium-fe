@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import ReactTimeAgo from "react-time-ago";
-import { useAppContext } from "../App";
+import { useAppContext, DEFAULT_IMG } from "../App";
 import { moreIcon, mutePost, savePost } from "../assets/icons";
 import { url } from "../baseUrl";
 import { httpRequest } from "../interceptor/axiosInterceptor";
@@ -107,7 +107,7 @@ export default function Post({
           <Link to={`/users/${userId}`}>
             <img
               style={{ width: "26px", borderRadius: "50%" }}
-              src={userImage}
+              src={userImage || DEFAULT_IMG}
               alt=""
             />
           </Link>
@@ -130,7 +130,7 @@ export default function Post({
             }}
           >
             <ReactTimeAgo
-              date={Number.parseInt(timestamp)}
+              date={new Date(timestamp).getTime()}
               locale="en-US"
               timeStyle="round"
             />
@@ -147,7 +147,7 @@ export default function Post({
           }}
         >
           <ReactTimeAgo
-            date={Number.parseInt(timestamp)}
+            date={new Date(timestamp).getTime()}
             locale="en-US"
             timeStyle="round"
           />

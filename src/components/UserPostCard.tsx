@@ -23,31 +23,61 @@ export default function UserPostCard({
 }: UserPostCardProps) {
   const { user } = useAuth();
   const { socket } = useAppContext();
-  // const [iFollow, setIFollow] = useState<boolean>(checkIfIFollow());
   const [iFollow, setIFollow] = useState<boolean>(false);
-  const { refetch: follow } = useQuery({
-    queryFn: () => httpRequest.put(`${url}/users/follow/${userId}`),
-    queryKey: ["handle", "follow", userId],
-    enabled: false,
-  });
-  const { refetch: unfollow } = useQuery({
-    queryFn: () => httpRequest.put(`${url}/users/unfollow/${userId}`),
-    queryKey: ["handle", "unfollow", userId],
-    enabled: false,
+  const [followCounts, setFollowCounts] = useState({ followersCount: 0, followingCount: 0 });
+
+  // Check if currently following this user
+  const { data: followingStatus } = useQuery({
+    queryFn: () => httpRequest.get(`${url}/follows/is-following/${userId}`),
+    queryKey: ["is-following", user?.id, userId],
+    enabled: !!user?.id && user?.id !== userId,
+    onSuccess: (response) => {
+      console.log('Is following response:', response.data);
+      setIFollow(response.data?.isFollowing || false);
+    },
+    onError: (error) => {
+      console.error('Error checking follow status:', error);
+      setIFollow(false);
+    },
   });
 
-  // function checkIfIFollow() {
-  //   console.log('FOLLOWER:::::>>>>>>',followers);
-  //   console.log(user?.id);
-  //   return followers.map((follower: any) => follower.id).includes(user!.id);
-  // }
+  // Get follow counts
+  const { data: countsData } = useQuery({
+    queryFn: () => httpRequest.get(`${url}/follows/counts/${userId}`),
+    queryKey: ["follow-counts", userId],
+    onSuccess: (response) => {
+      console.log('Follow counts response:', response.data);
+      setFollowCounts(response.data || { followersCount: 0, followingCount: 0 });
+    },
+    onError: (error) => {
+      console.error('Error getting follow counts:', error);
+    },
+  });
+
+  const { refetch: follow } = useQuery({
+    queryFn: () => httpRequest.post(`${url}/follows/${userId}`),
+    queryKey: ["handle", "follow", userId],
+    enabled: false,
+    onSuccess: () => {
+      setIFollow(true);
+      setFollowCounts(prev => ({ ...prev, followersCount: prev.followersCount + 1 }));
+    },
+  });
+  
+  const { refetch: unfollow } = useQuery({
+    queryFn: () => httpRequest.delete(`${url}/follows/${userId}`),
+    queryKey: ["handle", "unfollow", userId],
+    enabled: false,
+    onSuccess: () => {
+      setIFollow(false);
+      setFollowCounts(prev => ({ ...prev, followersCount: prev.followersCount - 1 }));
+    },
+  });
 
   function handleFollowUnfollow() {
     if (iFollow) {
-      setIFollow(false);
       unfollow();
     } else {
-      setIFollow(true);
       socket.emit("notify", { userId });
       follow();
     }
@@ -88,19 +118,31 @@ export default function UserPostCard({
       >
         {username}
       </Link>
-      <Link
-        to={`/users/${userId}/followers`}
-        style={{
-          marginLeft: "8px",
-          marginTop: "-4px",
-          fontSize: "14px",
-          fontFamily: "Roboto",
-          color: "#4b4a4a",
-          textDecoration: "none",
-        }}
-      >
-        {followers?.length > 0 ? followers?.length + " Followers" : ""}
-      </Link>
+      <div style={{ marginLeft: "8px", marginTop: "-4px", display: "flex", gap: "10px" }}>
+        <Link
+          to={`/users/${userId}/followers`}
+          style={{
+            fontSize: "14px",
+            fontFamily: "Roboto",
+            color: "#4b4a4a",
+            textDecoration: "none",
+          }}
+        >
+          {followCounts.followersCount > 0 ? followCounts.followersCount + " Followers" : "0 Followers"}
+        </Link>
+        <span style={{ color: "#4b4a4a", fontSize: "14px" }}>•</span>
+        <Link
+          to={`/users/${userId}/followings`}
+          style={{
+            fontSize: "14px",
+            fontFamily: "Roboto",
+            color: "#4b4a4a",
+            textDecoration: "none",
+          }}
+        >
+          {followCounts.followingCount > 0 ? followCounts.followingCount + " Following" : "0 Following"}
+        </Link>
+      </div>
       {bio && (
         <p
           style={{
@@ -122,13 +164,13 @@ export default function UserPostCard({
             marginLeft: "6px",
             borderRadius: "17px",
             border: iFollow ? "1px solid gray" : "none",
-            backgroundColor: iFollow ? "transparent" : "rgba(26, 137, 23, 1)",
-            color: iFollow ? "black" : "white",
+            backgroundColor: iFollow ? "white" : "rgba(26, 137, 23, 1)",
+            color: iFollow ? "gray" : "white",
             marginTop: "16px",
             cursor: "pointer",
           }}
         >
-          {iFollow ? "Unfollow" : "Follow"}
+          {iFollow ? "Following" : "Follow"}
         </button>
       ) : (
         <p

@@ -56,7 +56,14 @@ export default function User() {
     typeof USER_PAGE_TAB_OPTIONS_AUTH
   >([]);
   const [posts, setposts] = useState<Array<any>>([]);
-  const [userData, setUserData] = useState<Array<any>>([]);
+  const [followersData, setFollowersData] = useState<Array<any>>([]);
+  const [followingsData, setFollowingsData] = useState<Array<any>>([]);
+  const [followCounts, setFollowCounts] = useState({ followersCount: 0, followingCount: 0 });
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('📊 State updated - followersData:', followersData.length, 'followingsData:', followingsData.length);
+  }, [followersData, followingsData]);
 
   useEffect(() => {
     if (tab) return;
@@ -67,7 +74,7 @@ export default function User() {
     queryFn: () => httpRequest.get(`${url}/users/${id}`),
     queryKey: ["user", id],
     onSuccess: (data) => {
-      document.title = data.data.name + " - Medium";
+      document.title = data.data.name + " - Mindium";
       setOptionsTab(() => {
         if (user?.id === id)
           return USER_PAGE_TAB_OPTIONS_AUTH.map((item) => {
@@ -91,41 +98,105 @@ export default function User() {
   });
 
   const { refetch: getAllFollowers } = useQuery({
-    queryFn: () => httpRequest.get(`${url}/users/followers/${id}`),
-    enabled: true,
+    queryFn: () => {
+      console.log('getAllFollowers queryFn called with URL:', `${url}/follows/followers?userId=${id}&page=1&size=10`);
+      return httpRequest.get(`${url}/follows/followers?userId=${id}&page=1&size=10`);
+    },
+    enabled: false,
     queryKey: ["followers", "user", id],
     onSuccess(res) {
+      console.log('✅ Followers onSuccess called');
       console.log('Followers response: ', res.data);
-      // Backend returns { followers: [...] }
+      // Backend returns { followers: [{ followerId, createdAt, userProfile }], total, page, size }
       const followersData = res.data?.followers || [];
-      setUserData(Array.isArray(followersData) ? followersData : []);
+      const mappedFollowers = followersData.map((item: any) => ({
+        id: item.userProfile?.id || item.followerId,
+        name: item.userProfile?.name || 'Unknown',
+        avatar: item.userProfile?.avatar,
+        bio: item.userProfile?.bio,
+        followers: [] // We don't have nested follower data
+      }));
+      console.log('Mapped followers: ', mappedFollowers);
+      setFollowersData(mappedFollowers);
+    },
+    onError(error) {
+      console.error('❌ Error fetching followers: ', error);
     },
   });
 
   const { refetch: getAllFollowings } = useQuery({
-    queryFn: () => httpRequest.get(`${url}/users/followings/${id}`),
-    enabled: true,
+    queryFn: () => {
+      console.log('getAllFollowings queryFn called with URL:', `${url}/follows/following?userId=${id}&page=1&size=10`);
+      return httpRequest.get(`${url}/follows/following?userId=${id}&page=1&size=10`);
+    },
+    enabled: false,
     queryKey: ["followings", "user", id],
     onSuccess(res) {
+      console.log('✅ Followings onSuccess called');
       console.log('Followings response: ', res.data);
-      // Backend returns { followings: [...] }
-      const followingsData = res.data?.followings || [];
-      setUserData(Array.isArray(followingsData) ? followingsData : []);
+      console.log('Full followings response object: ', res);
+      // Backend returns { following: [{ followeeId, createdAt, userProfile }], total, page, size }
+      const followingsData = res.data?.following || [];
+      console.log('Followings data before mapping: ', followingsData);
+      const mappedFollowings = followingsData.map((item: any) => {
+        console.log('Mapping following item: ', item);
+        return {
+          id: item.userProfile?.id || item.followeeId,
+          name: item.userProfile?.name || 'Unknown',
+          avatar: item.userProfile?.avatar,
+          bio: item.userProfile?.bio,
+          followers: [] // We don't have nested follower data
+        };
+      });
+      console.log('Mapped followings: ', mappedFollowings);
+      setFollowingsData(mappedFollowings);
+    },
+    onError(error) {
+      console.error('❌ Error fetching followings: ', error);
+    },
+  });
+
+  // Get follow counts for the user
+  const { data: countsData } = useQuery({
+    queryFn: () => httpRequest.get(`${url}/follows/counts/${id}`),
+    queryKey: ["follow-counts", id],
+    enabled: !!id,
+    onSuccess: (response) => {
+      console.log('User page - Follow counts response:', response.data);
+      setFollowCounts(response.data || { followersCount: 0, followingCount: 0 });
+    },
+    onError: (error) => {
+      console.error('User page - Error getting follow counts:', error);
     },
   });
 
   useEffect(() => {
+    console.log('useEffect triggered - data:', !!data?.data, 'tab:', tab);
     if (!data?.data || !tab) return;
     if (tab == "followers") {
-      getAllFollowers();
+      console.log('Fetching followers...');
+      console.log('About to call getAllFollowers with id:', id);
+      getAllFollowers().then((result) => {
+        console.log('getAllFollowers promise resolved:', result);
+      }).catch((error) => {
+        console.error('getAllFollowers promise rejected:', error);
+      });
     } else if (tab == "followings") {
-      getAllFollowings();
+      console.log('Fetching followings...');
+      console.log('About to call getAllFollowings with id:', id);
+      getAllFollowings().then((result) => {
+        console.log('getAllFollowings promise resolved:', result);
+      }).catch((error) => {
+        console.error('getAllFollowings promise rejected:', error);
+      });
     } else {
+      console.log('Fetching posts...');
       refetch();
     }
     return () => {
       setposts([]);
-      setUserData([]);
+      setFollowersData([]);
+      setFollowingsData([]);
     };
   }, [data?.data, tab]);
 
@@ -211,20 +282,24 @@ export default function User() {
                 <p>{toTitleCase(tab)}</p>
               </div>
               <h1 style={{ marginBottom: "18px" }}>
-                {Array.isArray(userData) ? userData.length : 0} {toTitleCase(tab)}
+                {tab === "followers" ? followersData.length : followingsData.length} {toTitleCase(tab || '')}
               </h1>
-              {Array.isArray(userData) && userData.map((user: any) => {
-                return (
-                  <UserCard
-                    id={user.id}
-                    avatar={user.avatar}
-                    followers={user.followers}
-                    name={user.name}
-                    bio={user.bio}
-                    key={user.id}
-                  />
-                );
-              })}
+              {(() => {
+                const currentData = tab === "followers" ? followersData : followingsData;
+                console.log(`Rendering ${tab} with data:`, currentData);
+                return currentData.map((user: any) => {
+                  return (
+                    <UserCard
+                      id={user.id}
+                      avatar={user.avatar}
+                      followers={user.followers}
+                      name={user.name}
+                      bio={user.bio}
+                      key={user.id}
+                    />
+                  );
+                });
+              })()}
             </div>
           )
         ) : (
@@ -280,8 +355,8 @@ export default function User() {
               <AboutSection
                 userId={id!}
                 bio={data?.data.bio}
-                followers={data?.data.followers?.length}
-                followings={data?.data.followings.length}
+                followers={followCounts.followersCount}
+                followings={followCounts.followingCount}
               />
             )}
           </div>
@@ -299,7 +374,7 @@ export default function User() {
       >
         {data?.data && (
           <UserPostCard
-            followers={data.data.followers}
+            followers={[]} // We now get counts from API, not from user data
             userId={data.data.id}
             username={data.data.name}
             bio={data.data.bio}

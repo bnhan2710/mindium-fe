@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import ReactTimeAgo from "react-time-ago";
+import { DEFAULT_IMG } from "../App";
 
 type NotificationPropType = {
   userId: string;
@@ -50,7 +51,7 @@ export default function Notification({
         <Link to={`/users/${userId}`}>
           <img
             style={{ height: "34px", width: "34px", borderRadius: "50%" }}
-            src={avatar}
+            src={avatar || DEFAULT_IMG}
             alt=""
           />
         </Link>

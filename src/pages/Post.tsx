@@ -32,13 +32,22 @@ export default function Post() {
         queryKey: ["blog", id],
         onSuccess: (data) => {
             console.log('Fetch result: ', data);
+            console.log('Data structure:', data.data);
+            console.log('Author Id:', data.data?.authorId || data.data?.post?.authorId);
+            
 
-            document.title = data.data.post.title + " - Medium";
+            document.title = (data.data?.title || data.data?.post?.title) + " - Mindium";
             setVotes(0);
             setTurnBlack(true);
             // setVotes(data.data.post?.votes?.length ?? 0);
             // setTurnBlack(data.data.post?.votes.includes(user?.id));
         },
+    });
+
+    const { data: authorData } = useQuery({
+        queryFn: () => httpRequest.get(`${url}/users/${data?.data?.authorId || data?.data?.post?.authorId}`),
+        queryKey: ["author", data?.data?.authorId || data?.data?.post?.authorId],
+        enabled: !!(data?.data?.authorId || data?.data?.post?.authorId), 
     });
 
     const {refetch: clap} = useQuery({
@@ -47,7 +56,7 @@ export default function Post() {
         enabled: false,
         onSuccess: (res) => {
             if (res.data.success) {
-                socket.emit("notify", {userId: data?.data.post.author.id});
+                socket.emit("notify", {userId: data?.data?.authorId || data?.data?.post?.authorId});
                 setVotes((prev) => prev + 1);
             }
         },
@@ -116,14 +125,14 @@ export default function Post() {
                         marginRight: "auto",
                     }}
                 >
-                    {data?.data && (
+                    {data?.data && authorData?.data && (
                         <PostAuthor
-                            title={data.data.post.title}
-                            avatar={data.data.post.author?.avatar || ''}
-                            postId={data.data.post.id}
-                            timestamp={data.data.post.createdAt}
-                            username={data.data.post.author?.name || ''}
-                            userId={data.data.post.author?.id}
+                            title={data.data?.title || data.data?.post?.title}
+                            avatar={authorData.data.avatar || ''}
+                            postId={data.data?.id || data.data?.post?.id}
+                            timestamp={data.data?.createdAt || data.data?.post?.createdAt}
+                            username={authorData.data.name || ''}
+                            userId={authorData.data.id}
                             postUrl={postUrl}
                             anchorEl={anchorEl}
                             deletePost={deletePost}
@@ -141,10 +150,10 @@ export default function Post() {
                             marginBottom: "18px",
                         }}
                     >
-                        {data?.data?.post.title}
+                        {data?.data?.title || data?.data?.post?.title}
                     </h1>
                     <div className="markdown">
-                        <Markdown>{data?.data?.post?.markdown}</Markdown>
+                        <Markdown>{data?.data?.markdown || data?.data?.content || data?.data?.post?.markdown}</Markdown>
                     </div>
                     <div
                         className="bottomScreen"
@@ -153,7 +162,7 @@ export default function Post() {
                         }}
                     >
                         <div className="relatedTags">
-                            {data?.data?.post.tags.map((item: string) => {
+                            {(data?.data?.tags || data?.data?.post?.tags)?.map((item: string) => {
                                 return (
                                     <Chip
                                         key={item}
@@ -198,13 +207,13 @@ export default function Post() {
                                 >
                   <span
                       onClick={() =>
-                          data?.data.post.userId !== user?.id && votePost()
+                          (data?.data?.authorId || data?.data?.post?.authorId) !== user?.id && votePost()
                       }
                       style={{
                           ...iconColor,
                           color: turnBlack ? "black" : "rgb(171 169 169)",
                           cursor:
-                              data?.data.post.userId == user?.id
+                              (data?.data?.authorId || data?.data?.post?.authorId) == user?.id
                                   ? "not-allowed"
                                   : "pointer",
                       }}
@@ -235,8 +244,8 @@ export default function Post() {
                 <span
                     onClick={() =>
                         webShare({
-                            title: data?.data.post.title,
-                            text: "Check out this Medium blog",
+                            title: data?.data?.title || data?.data?.post?.title,
+                            text: "Check out this Mindium blog",
                             url: postUrl,
                         })
                     }
@@ -254,19 +263,19 @@ export default function Post() {
                                     open={open}
                                     handleClose={handleClose}
                                     editPost={editPost}
-                                    userId={data?.data.post.author.id}
+                                    userId={data?.data?.authorId || data?.data?.post?.authorId}
                                 />
                             </div>
                         </div>
                     </div>
-                    {id && data?.data?.post.author.id && (
+                    {id && authorData?.data && (
                         <MoreFrom
-                            userId={data?.data?.post.author.id}
+                            userId={authorData.data.id}
                             postId={id}
-                            avatar={data?.data?.post.author.avatar}
-                            username={data?.data?.post.author.name}
-                            bio={''}
-                            followers={data.data?.user?.followers}
+                            avatar={authorData.data.avatar}
+                            username={authorData.data.name}
+                            bio={authorData.data.bio}
+                            followers={authorData.data.followers}
                         />
                     )}
                 </div>
@@ -281,17 +290,17 @@ export default function Post() {
                     gap: "38px",
                 }}
             >
-                {data?.data.user && (
+                {authorData?.data && (
                     <UserPostCard
-                        followers={data.data.post.author.followers}
-                        userId={data.data.post.author.id}
-                        username={data.data.post.author.name}
-                        bio={data.data.post.author.bio}
-                        image={data.data.post.author.avatar}
+                        followers={authorData.data.followers}
+                        userId={authorData.data.id}
+                        username={authorData.data.name}
+                        bio={authorData.data.bio}
+                        image={authorData.data.avatar}
                     />
                 )}
                 {isAuthenticated ? (
-                    <TopPicks text="More from Medium" showImg={true}/>
+                    <TopPicks text="More from Mindium" showImg={true}/>
                 ) : (
                     <GetStarted
                         style={{width: "83%", marginLeft: "20px"}}

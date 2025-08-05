@@ -11,6 +11,7 @@ import { Link } from "react-router-dom";
 import useShare from "../hooks/useShare";
 import useClipboard from "../hooks/useClipboard";
 import PostMenu from "./PostMenu";
+import { DEFAULT_IMG } from "../App";
 
 type PostAuthorProps = {
   postId: string;
@@ -68,7 +69,7 @@ export default function PostAuthor({
         <Link to={`/users/${userId}`}>
           <img
             style={{ width: "50px", borderRadius: "50%" }}
-            src={avatar}
+            src={avatar || DEFAULT_IMG}
             alt=""
           />
         </Link>
@@ -98,7 +99,7 @@ export default function PostAuthor({
           >
             <p style={{ fontSize: "13px", color: "gray" }}>
               <ReactTimeAgo
-                date={Number.parseInt(timestamp)}
+                date={new Date(timestamp).getTime()}
                 locale="en-US"
                 timeStyle="round"
               />

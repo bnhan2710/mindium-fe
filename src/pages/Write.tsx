@@ -35,7 +35,7 @@ export default function Write() {
 
     useEffect(() => {
         hideNavbar(true);
-        document.title = "New story -Medium";
+        document.title = "New story -Mindium";
         return () => hideNavbar(false);
     }, []);
 
@@ -57,6 +57,7 @@ export default function Write() {
         queryKey: ["new", "blog", "post"],
         enabled: false,
         onSuccess(data) {
+            console.log(data);
             navigate(`/blog/${data.data.id}`);
         },
     });
