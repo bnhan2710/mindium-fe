@@ -11,7 +11,7 @@ import { httpRequest } from "../interceptor/axiosInterceptor";
 import AboutSection from "../components/AboutSection";
 import SavedSection from "../components/SavedSection";
 import UserCard from "../components/UserCard";
-import { toTitleCase } from "../utils/helper";
+import { toTitleCase, generateSlug } from "../utils/helper";
 import ListSection from "../components/ListSection";
 
 const USER_PAGE_TAB_OPTIONS_AUTH = [
@@ -336,6 +336,7 @@ export default function User() {
                   <Post
                     showUserList={true}
                     postId={item.id}
+                    slug={generateSlug(item.title)}
                     timestamp={item.createdAt}
                     title={item.title}
                     username={data?.data?.name}

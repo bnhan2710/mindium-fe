@@ -19,8 +19,8 @@ import PostMenu from "../components/PostMenu";
 export default function Post() {
     const {webShare} = useShare();
     const {user, isAuthenticated} = useAuth();
-    const {id} = useParams();
-    const postUrl = useMemo(() => window.location.href, [id]);
+    const {postId, slug} = useParams();
+    const postUrl = useMemo(() => window.location.href, [postId, slug]);
     const [votes, setVotes] = useState(0);
     const [turnBlack, setTurnBlack] = useState(false);
     const {socket} = useAppContext();
@@ -28,8 +28,8 @@ export default function Post() {
     const {handleToast} = useAppContext();
 
     const {isLoading, error, data} = useQuery({
-        queryFn: () => httpRequest.get(`${url}/posts/${id}`),
-        queryKey: ["blog", id],
+        queryFn: () => httpRequest.get(`${url}/posts/${postId}/${slug}`),
+        queryKey: ["blog", postId, slug],
         onSuccess: (data) => {
             console.log('Fetch result: ', data);
             console.log('Data structure:', data.data);
@@ -51,8 +51,8 @@ export default function Post() {
     });
 
     const {refetch: clap} = useQuery({
-        queryFn: () => httpRequest.patch(`${url}/posts/vote/${id}`),
-        queryKey: ["vote", id],
+        queryFn: () => httpRequest.patch(`${url}/posts/vote/${postId}`),
+        queryKey: ["vote", postId],
         enabled: false,
         onSuccess: (res) => {
             if (res.data.success) {
@@ -71,8 +71,8 @@ export default function Post() {
     const open = Boolean(anchorEl);
 
     const {refetch: deleteStory} = useQuery({
-        queryFn: () => httpRequest.delete(`${url}/posts/${id}`),
-        queryKey: ["delete", "page", id],
+        queryFn: () => httpRequest.delete(`${url}/posts/${postId}`),
+        queryKey: ["delete", "page", postId],
         enabled: false,
         onSuccess() {
             handleToast("Story deleted successfully");
@@ -93,7 +93,7 @@ export default function Post() {
     }
 
     function editPost() {
-        navigate(`/write/${id}`);
+        navigate(`/write/${postId}`);
     }
 
 
@@ -268,10 +268,10 @@ export default function Post() {
                             </div>
                         </div>
                     </div>
-                    {id && authorData?.data && (
+                    {postId && authorData?.data && (
                         <MoreFrom
                             userId={authorData.data.id}
-                            postId={id}
+                            postId={postId}
                             avatar={authorData.data.avatar}
                             username={authorData.data.name}
                             bio={authorData.data.bio}

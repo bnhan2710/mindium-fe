@@ -10,6 +10,7 @@ import WhoToFollow from "../components/WhoToFollow";
 import {useAuth} from "../contexts/Auth";
 import {httpRequest} from "../interceptor/axiosInterceptor";
 import UnAuthHome from "./UnAuthHome";
+import {generateSlug} from "../utils/helper";
 
 export default function Home() {
     const {tag} = useParams();
@@ -91,6 +92,7 @@ function HomeContainer({tag}: { tag: string }) {
                                 filterPost={filterPost}
                                 filterAuthorPost={filterAuthorPost}
                                 postId={item._id}
+                                slug={generateSlug(item.title)}
                                 timestamp={new Date(item.createdAt).getTime().toString()}
                                 title={item.title}
                                 username={item.author.name}

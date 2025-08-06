@@ -16,6 +16,7 @@ type PostProps = {
   userImage?: string;
   timestamp: string;
   postId: string;
+  slug: string;
   tag?: string;
   summary: string;
   userId: string;
@@ -29,6 +30,7 @@ type PostProps = {
 
 export default function Post({
   postId,
+  slug,
   timestamp,
   title,
   username,
@@ -168,7 +170,7 @@ export default function Post({
             style={{ margin: "8px 0", marginTop: "-2px", fontSize: "22px" }}
           >
             <Link
-              to={`/blog/${postId}`}
+              to={`/blog/${postId}/${slug}`}
               style={{
                 fontFamily: "Poppins",
                 color: "inherit",
@@ -180,7 +182,7 @@ export default function Post({
           </h3>
           <Link
             className="resp_summary"
-            to={`/blog/${postId}`}
+            to={`/blog/${postId}/${slug}`}
             style={{
               fontSize: "15.25px",
               marginTop: "10px",
@@ -251,7 +253,7 @@ export default function Post({
             </div>
           </div>
         </div>
-        <Link to={`/blog/${postId}`} className="image">
+        <Link to={`/blog/${postId}/${slug}`} className="image">
           {image && (
             <img
               className="post_image"

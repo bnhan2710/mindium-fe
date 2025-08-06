@@ -91,7 +91,7 @@ export default function App() {
                     <Route path="/signin/:tab" element={<SignIn/>}/>
                     <Route path="/suggestions" element={<Suggestions/>}/>
                     <Route path="/search/:tab/:query" element={<SearchResults/>}/>
-                    <Route path="/blog/:id" element={<Post/>}/>
+                    <Route path="/blog/:postId/:slug" element={<Post/>}/>
                     <Route path="/users/:id/:tab?" element={<User/>}/>
                     <Route
                         path="/notifications"

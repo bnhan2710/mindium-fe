@@ -8,6 +8,7 @@ import WhoToFollow from "../components/WhoToFollow";
 import {useAuth} from "../contexts/Auth";
 import useDebounce from "../hooks/useDebounce";
 import {httpRequest} from "../interceptor/axiosInterceptor";
+import {generateSlug} from "../utils/helper";
 
 export default function Notifications({
                                           emptyNotifications,
@@ -90,6 +91,7 @@ export default function Notifications({
                                     userId={item.userId}
                                     username={item.username}
                                     postId={item.postId}
+                                    postSlug={item.postTitle ? generateSlug(item.postTitle) : undefined}
                                     postTitle={item.postTitle}
                                 />
                             );

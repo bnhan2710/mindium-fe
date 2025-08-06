@@ -8,6 +8,7 @@ type StoryCardProps = {
     title: string;
     userId: string;
     postId: string;
+    slug: string;
     image: string;
     avatar: string;
 };
@@ -16,6 +17,7 @@ export default function StoryCard({
                                       showImg,
                                       image,
                                       postId,
+                                      slug,
                                       title,
                                       userId,
                                       username,
@@ -63,7 +65,7 @@ export default function StoryCard({
                 }}
             >
                 <Link
-                    to={`/blog/${postId}`}
+                    to={`/blog/${postId}/${slug}`}
                     style={{
                         fontFamily: "Poppins",
                         fontWeight: "bolder",
@@ -77,7 +79,7 @@ export default function StoryCard({
                     {title}
                 </Link>
                 {showImg && (
-                    <Link to={`/blog/${postId}`} className="img">
+                    <Link to={`/blog/${postId}/${slug}`} className="img">
                         <img
                             style={{
                                 marginTop: "-12px",

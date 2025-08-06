@@ -58,7 +58,9 @@ export default function Write() {
         enabled: false,
         onSuccess(data) {
             console.log(data);
-            navigate(`/blog/${data.data.id}`);
+            // Giả sử API response có slug hoặc tạo slug từ title
+            const slug = data.data.slug || data.data.title?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            navigate(`/blog/${data.data.id}/${slug}`);
         },
     });
 
@@ -90,8 +92,10 @@ export default function Write() {
         },
         queryKey: ["blog", "post", "update", postId],
         enabled: false,
-        onSuccess() {
-            navigate(`/blog/${postId}`);
+        onSuccess(data) {
+            // Giả sử API response có slug hoặc tạo slug từ title
+            const slug = data?.data?.slug || post.title?.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+            navigate(`/blog/${postId}/${slug}`);
         },
     });
 

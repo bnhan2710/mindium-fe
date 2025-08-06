@@ -9,6 +9,7 @@ type NotificationPropType = {
   avatar: string;
   message: string;
   postId?: string;
+  postSlug?: string;
   postTitle?: string;
   read: boolean;
   createdAt: string;
@@ -22,6 +23,7 @@ export default function Notification({
   userId,
   username,
   postId,
+  postSlug,
   postTitle,
 }: NotificationPropType) {
     console.log('createdAT: ', createdAt);
@@ -57,7 +59,7 @@ export default function Notification({
         </Link>
       </div>
       <Link
-        to={postId ? `/blog/${postId}` : `/users/${userId}`}
+        to={postId && postSlug ? `/blog/${postId}/${postSlug}` : `/users/${userId}`}
         className="notification_content hover_black"
         style={{
           display: "flex",
