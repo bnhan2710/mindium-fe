@@ -19,7 +19,7 @@ export default function ListSection({listName}: { listName: string }) {
                     <Post
                         showUserList={true}
                         postId={item.post.id}
-                        timestamp={item.post.createdAt}
+                        timestamp={Date.parse(item.post.createdAt)}
                         title={item.post.title}
                         username={item.user.name}
                         userId={item.user.id}
@@ -29,8 +29,7 @@ export default function ListSection({listName}: { listName: string }) {
                         key={item.post.id}
                         summary={item.post.summary}
                         showMuteicon={false}
-                        showMoreIcon={false}
-                    />
+                        showMoreIcon={false} slug={""}                    />
                 );
             })}
         </div>

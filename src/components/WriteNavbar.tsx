@@ -6,12 +6,14 @@ type WriteNavType = {
     onClick(): void;
     disabled: boolean;
     buttonText: string;
+    onClearDraft?: () => void;
 };
 
 export default function WriteNavbar({
                                         onClick,
                                         disabled,
                                         buttonText,
+                                        onClearDraft,
                                     }: WriteNavType) {
     return (
         <div
@@ -54,6 +56,22 @@ export default function WriteNavbar({
                 >
                     {buttonText}
                 </button>
+                {onClearDraft && (
+                    <button
+                        onClick={onClearDraft}
+                        style={{
+                            color: "#666",
+                            backgroundColor: "transparent",
+                            border: "1px solid #ddd",
+                            outline: "none",
+                            padding: "6px 12px",
+                            borderRadius: "15px",
+                            cursor: "pointer",
+                        }}
+                    >
+                        Clear Draft
+                    </button>
+                )}
                 <span style={{color: "gray", cursor: "pointer"}}>{moreIcon}</span>
                 <Link to="/notifications">
           <span style={{color: "gray", cursor: "pointer"}}>

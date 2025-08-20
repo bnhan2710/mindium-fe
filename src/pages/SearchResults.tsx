@@ -142,7 +142,7 @@ export default function SearchResults() {
                                 filterPost={filterPost}
                                 filterAuthorPost={filterAuthorPost}
                                 postId={item.id}
-                                timestamp={new Date(item.createdAt).getTime().toString()}
+                                timestamp={Date.parse(item.createdAt)}
                                 title={item.title}
                                 username={item.author.name}
                                 userId={item.author.id}
@@ -151,8 +151,8 @@ export default function SearchResults() {
                                 userImage={item.author.avatar}
                                 key={item.id}
                                 summary={item.summary}
-                                showMuteicon={false}
-                            />
+                                showMuteicon={false} 
+                                slug={""}                            />
                         ))}
                     {tab === "topics" && (
                         <div

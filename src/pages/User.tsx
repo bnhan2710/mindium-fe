@@ -337,7 +337,7 @@ export default function User() {
                     showUserList={true}
                     postId={item.id}
                     slug={generateSlug(item.title)}
-                    timestamp={item.createdAt}
+                    timestamp={Date.parse(item.createdAt)}
                     title={item.title}
                     username={data?.data?.name}
                     userId={id as string}

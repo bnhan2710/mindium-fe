@@ -42,7 +42,7 @@ export default function Explore() {
                                     filterAuthorPost={() => {
                                     }}
                                     postId={item.post.id}
-                                    timestamp={item.post.createdAt}
+                                    timestamp={Date.parse(item.post.createdAt)}
                                     title={item.post.title}
                                     username={item.user.name}
                                     userId={item.user.id}

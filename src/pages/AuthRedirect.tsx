@@ -24,9 +24,11 @@ export default function AuthRedirect() {
         axios
             .get(`${url}/users/${query.get("uid")}`)
             .then((res) => {
-                if (!res.data.success) {
+                // API trả về trực tiếp UserResponseDto, không có wrapper
+                if (!res.data || !res.data.id) {
                     setErr("Something unexpected happened");
                     clearLocalStorage();
+                    return;
                 }
                 setAccessToken(query.get("access_token") as string);
                 setRefreshToken(query.get("refresh_token") as string);

@@ -93,7 +93,7 @@ function HomeContainer({tag}: { tag: string }) {
                                 filterAuthorPost={filterAuthorPost}
                                 postId={item._id}
                                 slug={generateSlug(item.title)}
-                                timestamp={new Date(item.createdAt).getTime().toString()}
+                                timestamp={Date.parse(item.createdAt)}
                                 title={item.title}
                                 username={item.author.name}
                                 userId={item.author._id}

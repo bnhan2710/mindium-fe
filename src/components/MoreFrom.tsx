@@ -1,4 +1,4 @@
-import {useQuery} from "@tanstack/react-query";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {useState} from "react";
 import {Link} from "react-router-dom";
 import {useAppContext} from "../App";
@@ -26,6 +26,7 @@ export default function MoreFrom({
     const [iFollow, setIFollow] = useState(followers?.includes(user?.id ?? ""));
     const [posts, setposts] = useState<Array<any>>([]);
     const {handleToast} = useAppContext();
+    const queryClient = useQueryClient();
 
     useQuery({
         queryFn: () => httpRequest.get(`${url}/suggestions/posts/${postId}`),
@@ -35,16 +36,32 @@ export default function MoreFrom({
         },
     });
 
-    const {refetch: follow} = useQuery({
-        queryFn: () => httpRequest.put(`${url}/users/follow/${userId}`),
-        queryKey: ["follow", "more", "from", postId, userId],
-        enabled: false,
+    // Follow user mutation
+    const followMutation = useMutation({
+        mutationFn: () => httpRequest.put(`${url}/users/follow/${userId}`),
+        onSuccess: () => {
+            setIFollow(true);
+            
+            // Invalidate related queries
+            queryClient.invalidateQueries({ queryKey: ["more", "from", userId, postId] });
+            queryClient.invalidateQueries({ queryKey: ["is-following", user?.id, userId] });
+            queryClient.invalidateQueries({ queryKey: ["follow-counts", userId] });
+            queryClient.invalidateQueries({ queryKey: ["user", userId] });
+        },
     });
 
-    const {refetch: unfollow} = useQuery({
-        queryFn: () => httpRequest.put(`${url}/users/unfollow/${userId}`),
-        queryKey: ["unfollow", "more", "from", postId, userId],
-        enabled: false,
+    // Unfollow user mutation
+    const unfollowMutation = useMutation({
+        mutationFn: () => httpRequest.put(`${url}/users/unfollow/${userId}`),
+        onSuccess: () => {
+            setIFollow(false);
+            
+            // Invalidate related queries
+            queryClient.invalidateQueries({ queryKey: ["more", "from", userId, postId] });
+            queryClient.invalidateQueries({ queryKey: ["is-following", user?.id, userId] });
+            queryClient.invalidateQueries({ queryKey: ["follow-counts", userId] });
+            queryClient.invalidateQueries({ queryKey: ["user", userId] });
+        },
     });
 
     function filterPost(postId: string) {
@@ -53,12 +70,10 @@ export default function MoreFrom({
 
     function handleFollowUnfollow() {
         if (iFollow) {
-            setIFollow(false);
-            unfollow();
+            unfollowMutation.mutate();
         } else {
-            setIFollow(true);
-            socket.emit("notify", {userId});
-            follow();
+            socket.emit("notify", {userId: userId});
+            followMutation.mutate();
         }
     }
 
@@ -135,15 +150,15 @@ export default function MoreFrom({
                             postId={post.id}
                             summary={post.summary}
                             title={post.title}
-                            timestamp={post.createdAt}
+                            timestamp={Date.parse(post.createdAt)}
                             showMuteicon={false}
                             image={post.image}
                             key={post.id}
                             tag={post.tags.at(0)}
                             showUserList={false}
                             userId={post.userId}
-                            filterPost={filterPost}
-                        />
+                            filterPost={filterPost} 
+                            slug={""}                        />
                     );
                 })}
             </div>

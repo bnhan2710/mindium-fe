@@ -14,7 +14,7 @@ type PostProps = {
   image?: string;
   username?: string;
   userImage?: string;
-  timestamp: string;
+  timestamp: string | number | Date;
   postId: string;
   slug: string;
   tag?: string;
@@ -87,6 +87,23 @@ export default function Post({
 
   console.log('Timestamp: ', timestamp);
 
+  function parseToEpochMs(value: string | number | Date | undefined | null): number | null {
+    if (value == null) return null;
+    if (value instanceof Date) {
+      const ms = value.getTime();
+      return Number.isFinite(ms) ? ms : null;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      const numericCandidate = /^[0-9]+$/.test(trimmed) ? Number(trimmed) : Date.parse(trimmed);
+      return Number.isFinite(numericCandidate) ? numericCandidate : null;
+    }
+    return null;
+  }
+
   return (
     <div
       style={{
@@ -131,11 +148,12 @@ export default function Post({
               fontFamily: "Roboto Slab",
             }}
           >
-            <ReactTimeAgo
-              date={new Date(timestamp).getTime()}
-              locale="en-US"
-              timeStyle="round"
-            />
+            {(() => {
+              const ms = parseToEpochMs(timestamp);
+              return ms != null ? (
+                <ReactTimeAgo date={ms} locale="en-US" timeStyle="round" />
+              ) : null;
+            })()}
           </p>
         </div>
       )}
@@ -148,11 +166,12 @@ export default function Post({
             marginBottom: "10px",
           }}
         >
-          <ReactTimeAgo
-            date={new Date(timestamp).getTime()}
-            locale="en-US"
-            timeStyle="round"
-          />
+          {(() => {
+            const ms = parseToEpochMs(timestamp);
+            return ms != null ? (
+              <ReactTimeAgo date={ms} locale="en-US" timeStyle="round" />
+            ) : null;
+          })()}
         </p>
       )}
       <div

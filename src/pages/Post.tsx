@@ -1,5 +1,5 @@
 import {useNavigate, useParams} from "react-router-dom";
-import {useQuery} from "@tanstack/react-query";
+import {useQuery, useMutation, useQueryClient} from "@tanstack/react-query";
 import {httpRequest} from "../interceptor/axiosInterceptor";
 import {url} from "../baseUrl";
 import Markdown from "../components/Markdown";
@@ -9,7 +9,7 @@ import TopPicks from "../components/TopPicks";
 import UserPostCard from "../components/UserPostCard";
 import PostAuthor from "../components/PostAuthor";
 import useShare from "../hooks/useShare";
-import {useMemo, useState} from "react";
+import {useEffect, useMemo, useState} from "react";
 import {useAuth} from "../contexts/Auth";
 import MoreFrom from "../components/MoreFrom";
 import {GetStarted} from "../components/AvatarMenu";
@@ -26,6 +26,7 @@ export default function Post() {
     const {socket} = useAppContext();
     const navigate = useNavigate();
     const {handleToast} = useAppContext();
+    const queryClient = useQueryClient();
 
     const {isLoading, error, data} = useQuery({
         queryFn: () => httpRequest.get(`${url}/posts/${postId}/${slug}`),
@@ -50,33 +51,42 @@ export default function Post() {
         enabled: !!(data?.data?.authorId || data?.data?.post?.authorId), 
     });
 
-    const {refetch: clap} = useQuery({
-        queryFn: () => httpRequest.patch(`${url}/posts/vote/${postId}`),
-        queryKey: ["vote", postId],
-        enabled: false,
+    // Vote post mutation
+    const votePostMutation = useMutation({
+        mutationFn: () => httpRequest.patch(`${url}/posts/vote/${postId}`),
         onSuccess: (res) => {
             if (res.data.success) {
                 socket.emit("notify", {userId: data?.data?.authorId || data?.data?.post?.authorId});
                 setVotes((prev) => prev + 1);
+                
+                // Invalidate related queries
+                queryClient.invalidateQueries({ queryKey: ["blog", postId, slug] });
             }
         },
     });
 
     function votePost() {
         setTurnBlack(true);
-        clap();
+        votePostMutation.mutate();
     }
 
     const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
     const open = Boolean(anchorEl);
 
-    const {refetch: deleteStory} = useQuery({
-        queryFn: () => httpRequest.delete(`${url}/posts/${postId}`),
-        queryKey: ["delete", "page", postId],
-        enabled: false,
+    // Delete post mutation
+    const deletePostMutation = useMutation({
+        mutationFn: () => httpRequest.delete(`${url}/posts/${postId}`),
         onSuccess() {
             handleToast("Story deleted successfully");
             handleClose();
+            
+            // Invalidate all related queries
+            queryClient.invalidateQueries({ queryKey: ["home", "no"] });
+            queryClient.invalidateQueries({ queryKey: ["home", "topic"] });
+            queryClient.invalidateQueries({ queryKey: ["explore", "unauth"] });
+            queryClient.invalidateQueries({ queryKey: ["post", "user"] });
+            queryClient.invalidateQueries({ queryKey: ["blog"] });
+            
             navigate(-1);
         },
     });
@@ -89,7 +99,7 @@ export default function Post() {
     };
 
     function deletePost() {
-        deleteStory();
+        deletePostMutation.mutate();
     }
 
     function editPost() {
@@ -130,7 +140,7 @@ export default function Post() {
                             title={data.data?.title || data.data?.post?.title}
                             avatar={authorData.data.avatar || ''}
                             postId={data.data?.id || data.data?.post?.id}
-                            timestamp={data.data?.createdAt || data.data?.post?.createdAt}
+                            timestamp={Date.parse(data.data?.createdAt || data.data?.post?.createdAt)}
                             username={authorData.data.name || ''}
                             userId={authorData.data.id}
                             postUrl={postUrl}

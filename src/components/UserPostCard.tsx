@@ -5,6 +5,7 @@ import { useAppContext } from "../App";
 import { url } from "../baseUrl";
 import { useAuth } from "../contexts/Auth";
 import { httpRequest } from "../interceptor/axiosInterceptor";
+import ProfileEdit from "../pages/ProfileEdit";
 
 type UserPostCardProps = {
   image?: string;
@@ -25,6 +26,7 @@ export default function UserPostCard({
   const { socket } = useAppContext();
   const [iFollow, setIFollow] = useState<boolean>(false);
   const [followCounts, setFollowCounts] = useState({ followersCount: 0, followingCount: 0 });
+  const [showProfileEdit, setShowProfileEdit] = useState(false);
 
   // Check if currently following this user
   const { data: followingStatus } = useQuery({
@@ -84,16 +86,17 @@ export default function UserPostCard({
   }
 
   return (
-    <div
-      style={{
-        width: "90%",
-        marginLeft: "auto",
-        display: "flex",
-        flexDirection: "column",
-        gap: "10px",
-        marginTop: "12px",
-      }}
-    >
+    <>
+      <div
+        style={{
+          width: "90%",
+          marginLeft: "auto",
+          display: "flex",
+          flexDirection: "column",
+          gap: "10px",
+          marginTop: "12px",
+        }}
+      >
       <Link to={`/users/${userId}`}>
         <img
           style={{
@@ -173,17 +176,30 @@ export default function UserPostCard({
           {iFollow ? "Following" : "Follow"}
         </button>
       ) : (
-        <p
+        <button
+          onClick={() => setShowProfileEdit(true)}
           style={{
             color: "rgba(26, 137, 23, 1)",
             marginLeft: "8px",
             marginTop: !bio ? "5px" : "12px",
             fontSize: "13.4px",
+            background: "none",
+            border: "none",
+            cursor: "pointer",
+            textAlign: "left",
+            padding: 0
           }}
         >
           Edit profile
-        </p>
+        </button>
       )}
-    </div>
+      </div>
+
+      {/* Profile Edit Modal */}
+      <ProfileEdit 
+        isOpen={showProfileEdit} 
+        onClose={() => setShowProfileEdit(false)} 
+      />
+    </>
   );
 }

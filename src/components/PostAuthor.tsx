@@ -17,7 +17,7 @@ type PostAuthorProps = {
   postId: string;
   username: string;
   avatar: string;
-  timestamp: string;
+  timestamp: string | number | Date;
   userId: string;
   title: string;
   postUrl: string;
@@ -48,6 +48,23 @@ export default function PostAuthor({
   const [_, copy] = useClipboard();
 
   console.log('Timestamp PostAuthor', timestamp);
+
+  function parseToEpochMs(value: string | number | Date | undefined | null): number | null {
+    if (value == null) return null;
+    if (value instanceof Date) {
+      const ms = value.getTime();
+      return Number.isFinite(ms) ? ms : null;
+    }
+    if (typeof value === "number") {
+      return Number.isFinite(value) ? value : null;
+    }
+    if (typeof value === "string") {
+      const trimmed = value.trim();
+      const numericCandidate = /^[0-9]+$/.test(trimmed) ? Number(trimmed) : Date.parse(trimmed);
+      return Number.isFinite(numericCandidate) ? numericCandidate : null;
+    }
+    return null;
+  }
 
   return (
     <div
@@ -98,11 +115,12 @@ export default function PostAuthor({
             }}
           >
             <p style={{ fontSize: "13px", color: "gray" }}>
-              <ReactTimeAgo
-                date={new Date(timestamp).getTime()}
-                locale="en-US"
-                timeStyle="round"
-              />
+              {(() => {
+                const ms = parseToEpochMs(timestamp);
+                return ms != null ? (
+                  <ReactTimeAgo date={ms} locale="en-US" timeStyle="round" />
+                ) : null;
+              })()}
             </p>
             <p style={{ fontSize: "13px", color: "gray" }}>3 min read</p>
           </div>
